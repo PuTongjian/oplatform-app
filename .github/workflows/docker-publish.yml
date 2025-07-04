@@ -1,0 +1,61 @@
+name: 构建并发布Docker镜像
+
+on:
+  push:
+    branches: [ "main" ]
+    # 当标签以v开头时也触发workflow（如v1.0.0）
+    tags: [ 'v*' ]
+  # 允许手动触发workflow
+  workflow_dispatch:
+
+env:
+  # 镜像名称，请替换为您的Docker Hub用户名/镜像名
+  IMAGE_NAME: ctrlc2v/oplatform-app
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      # 设置Docker Buildx
+      - name: 设置Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # 登录到Docker Hub
+      - name: 登录到Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 提取元数据（标签、标签等）用于Docker
+      - name: 提取Docker元数据
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          # 根据标签和分支生成版本号
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=,suffix=,format=short
+
+      # 构建并推送Docker镜像
+      - name: 构建并推送
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./docker/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max 

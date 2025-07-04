@@ -122,3 +122,83 @@ pnpm dev
 - 目前仅支持文本方式存储数据，未实现数据库存储
 - 在生产环境中部署时，请确保 `data` 目录有适当的文件读写权限
 - 为安全起见，建议在生产环境中使用 HTTPS
+
+## Docker部署指南
+
+本项目支持通过Docker快速部署。所有Docker相关文件位于`docker`目录。
+
+### 前提条件
+
+- 已安装Docker
+- 已安装Docker Compose
+
+### 快速部署
+
+使用提供的一键部署脚本：
+
+```bash
+# 添加执行权限
+chmod +x docker/deploy.sh
+
+# 运行部署脚本
+./docker/deploy.sh
+```
+
+脚本会自动执行以下操作：
+1. 构建Docker镜像
+2. 停止并移除旧容器（如果存在）
+3. 启动新容器
+4. 显示容器运行状态
+
+### 手动部署
+
+如果需要手动部署，可以执行以下命令：
+
+```bash
+# 构建镜像
+docker-compose -f docker/docker-compose.yml build
+
+# 启动容器
+docker-compose -f docker/docker-compose.yml up -d
+
+# 查看日志
+docker-compose -f docker/docker-compose.yml logs -f
+```
+
+部署完成后，应用将运行在 http://localhost:3000
+
+## GitHub Actions自动构建
+
+本项目配置了GitHub Actions自动构建和发布Docker镜像到Docker Hub。
+
+### 配置步骤
+
+1. Fork或克隆此仓库到您的GitHub账号
+2. 在GitHub仓库设置中添加以下Secrets:
+   - `DOCKERHUB_USERNAME`: 您的Docker Hub用户名
+   - `DOCKERHUB_TOKEN`: 您的Docker Hub访问令牌（在Docker Hub账号设置中创建）
+3. 在`.github/workflows/docker-publish.yml`文件中修改`IMAGE_NAME`为您的Docker仓库名称
+
+### 触发构建
+
+以下操作会触发自动构建并发布Docker镜像：
+- 推送代码到`main`分支
+- 创建以`v`开头的标签（如`v1.0.0`）
+- 手动在GitHub Actions页面触发workflow
+
+### 使用发布的镜像
+
+发布后，您可以通过以下命令拉取并运行镜像：
+
+```bash
+# 拉取最新镜像
+docker pull your-dockerhub-username/oplatform-app:latest
+
+# 运行容器
+docker run -d -p 3000:3000 your-dockerhub-username/oplatform-app:latest
+```
+
+## 其他说明
+
+- 应用使用内存缓存存储数据，重启容器后数据将丢失
+- 默认端口为3000，可在docker/docker-compose.yml中修改

@@ -26,6 +26,7 @@ interface MessageData {
   decryptedData?: any;
   isEncrypted?: boolean;
   signatureValid?: boolean;
+  appid?: string;
 }
 
 export default function Home() {
@@ -201,6 +202,11 @@ export default function Home() {
                               {msg.isEncrypted && (
                                 <span className="ml-2 px-1.5 py-0.5 text-xs rounded bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                                   加密消息
+                                </span>
+                              )}
+                              {msg.appid && (
+                                <span className="ml-2 px-1.5 py-0.5 text-xs rounded bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                                  {msg.appid}
                                 </span>
                               )}
                             </div>

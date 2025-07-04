@@ -2,17 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { decryptWxMessage } from '@/utils/wxMessageCrypto';
 import * as memoryCache from '@/utils/memoryCache';
 
-// 缓存键前缀
-const MESSAGES_CACHE_KEY_PREFIX = 'wx_messages_';
+// 使用统一的缓存键存储所有消息
+const MESSAGES_CACHE_KEY = 'wx_messages';
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ appid: string }> }) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ appid: string }> }
+) {
   try {
     // 获取路径中的appid
     const { appid } = await params;
     console.log('Processing request for appid:', appid);
-
-    // 构建特定appid的缓存键
-    const MESSAGES_CACHE_KEY = `${MESSAGES_CACHE_KEY_PREFIX}${appid}`;
     
     // 获取请求参数和请求体
     const url = request.url;
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     
     // 存储消息
     const messageInfo = {
-      appid,
+      appid, // 将appid作为消息的属性
       receivedAt: new Date().toISOString(),
       params: {
         signature, timestamp, nonce, openid, encryptType, msgSignature
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       signatureValid: decryptResult.signatureValid
     };
     
-    // 读取现有消息
+    // 读取现有消息，使用统一的缓存键
     let messages = memoryCache.get<any[]>(MESSAGES_CACHE_KEY) || [];
     
     // 添加新消息
@@ -69,8 +69,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     
     // 将消息存入缓存
     memoryCache.set(MESSAGES_CACHE_KEY, messages);
+    
+    console.log(`Message for appid ${appid} stored successfully in memory cache`);
 
-    // 按照文档要求，返回success字符串 
+    // 按照文档要求，返回success字符串
     return new NextResponse('success', {
       status: 200,
       headers: { 'Content-Type': 'text/plain' }

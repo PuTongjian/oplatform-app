@@ -1,21 +1,9 @@
-import fs from 'fs';
-import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 import { decryptWxMessage } from '@/utils/wxMessageCrypto';
+import * as memoryCache from '@/utils/memoryCache';
 
-// 定义存储路径
-const DATA_DIR = path.join(process.cwd(), 'data');
-const MESSAGES_FILE = path.join(DATA_DIR, 'messages.txt');
-
-// 确保目录存在
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
-
-// 确保消息文件存在
-if (!fs.existsSync(MESSAGES_FILE)) {
-  fs.writeFileSync(MESSAGES_FILE, '[]');
-}
+// 缓存键
+const MESSAGES_CACHE_KEY = 'wx_messages';
 
 export async function POST(request: NextRequest) {
   try {
@@ -61,21 +49,20 @@ export async function POST(request: NextRequest) {
     };
     
     // 读取现有消息
-    let messages = [];
-    try {
-      const existingData = fs.readFileSync(MESSAGES_FILE, 'utf-8');
-      messages = JSON.parse(existingData);
-    } catch (error) {
-      console.error('Error reading messages file:', error);
-    }
+    let messages = memoryCache.get<any[]>(MESSAGES_CACHE_KEY) || [];
     
     // 添加新消息
     messages.push(messageInfo);
     
-    // 将消息写入文件（追加写入）
-    fs.writeFileSync(MESSAGES_FILE, JSON.stringify(messages, null, 2));
+    // 限制存储的消息数量，防止内存溢出
+    if (messages.length > 100) {
+      messages = messages.slice(-100); // 只保留最新的100条消息
+    }
     
-    console.log('Message stored successfully');
+    // 将消息存入缓存
+    memoryCache.set(MESSAGES_CACHE_KEY, messages);
+    
+    console.log('Message stored successfully in memory cache');
 
     // 按照文档要求，返回success字符串
     return new NextResponse('success', {

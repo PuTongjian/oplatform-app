@@ -1,16 +1,9 @@
-import fs from 'fs';
-import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 import { decryptWxMessage, extractWxMessageData } from '@/utils/wxMessageCrypto';
+import * as memoryCache from '@/utils/memoryCache';
 
-// 定义存储路径
-const DATA_DIR = path.join(process.cwd(), 'data');
-const TICKET_FILE = path.join(DATA_DIR, 'component_verify_ticket.txt');
-
-// 确保目录存在
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
+// 缓存键
+const TICKET_CACHE_KEY = 'component_verify_ticket';
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,18 +42,18 @@ export async function POST(request: NextRequest) {
     // 检查是否为ticket消息
     if (messageData && messageData.ComponentVerifyTicket && messageData.InfoType === 'component_verify_ticket') {
       // 存储ticket信息
-      const ticketInfo = JSON.stringify({
+      const ticketInfo = {
         ticket: messageData.ComponentVerifyTicket,
         appId: messageData.AppId,
         createTime: messageData.CreateTime,
         receivedAt: new Date().toISOString(),
         raw: dataToUse,
-      }, null, 2);
+      };
       
-      // 将ticket写入文件（覆盖写入，因为ticket是唯一的）
-      fs.writeFileSync(TICKET_FILE, ticketInfo);
+      // 将ticket存入内存缓存
+      memoryCache.set(TICKET_CACHE_KEY, ticketInfo);
       
-      console.log('Ticket stored successfully');
+      console.log('Ticket stored successfully in memory cache');
     }
 
     // 按照文档要求，返回success字符串

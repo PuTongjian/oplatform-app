@@ -5,10 +5,10 @@ import * as memoryCache from '@/utils/memoryCache';
 // 缓存键前缀
 const MESSAGES_CACHE_KEY_PREFIX = 'wx_messages_';
 
-export async function POST(request: NextRequest, { params }: { params: { appid: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ appid: string }> }) {
   try {
     // 获取路径中的appid
-    const appid = params.appid;
+    const { appid } = await params;
     console.log('Processing request for appid:', appid);
 
     // 构建特定appid的缓存键
@@ -69,8 +69,6 @@ export async function POST(request: NextRequest, { params }: { params: { appid: 
     
     // 将消息存入缓存
     memoryCache.set(MESSAGES_CACHE_KEY, messages);
-    
-    console.log(`Message for appid ${appid} stored successfully in memory cache`);
 
     // 按照文档要求，返回success字符串 
     return new NextResponse('success', {

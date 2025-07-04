@@ -72,7 +72,7 @@ export async function POST(request: NextRequest, { params }: { params: { appid: 
     
     console.log(`Message for appid ${appid} stored successfully in memory cache`);
 
-    // 按照文档要求，返回success字符串
+    // 按照文档要求，返回success字符串 
     return new NextResponse('success', {
       status: 200,
       headers: { 'Content-Type': 'text/plain' }

@@ -2,6 +2,9 @@
 const wechatConfig = {
   // 第三方平台的 AppID，可在微信开放平台获取
   appId: 'wx4359ea3228e0f1c3',
+
+  // 第三方平台的 AppSecret，可在微信开放平台获取
+  appSecret: '950b6082fbdb233642d0fc50e04fee60',
   
   // 消息校验Token，用于签名校验，需与微信开放平台配置一致
   token: 'suVJ3SJvsoAtmXtI0qyTJhzMuXSxBA4v',

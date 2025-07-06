@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TicketData } from '@/types/dataTypes';
 
 interface TicketPanelProps {
@@ -13,6 +13,14 @@ export default function TicketPanel({ ticketData, onSaveTicket }: TicketPanelPro
   const [xmlError, setXmlError] = useState<string>('');
   const [showXmlInput, setShowXmlInput] = useState<boolean>(false);
   const [savingTicket, setSavingTicket] = useState<boolean>(false);
+
+  // 初始化时从localStorage加载token
+  useEffect(() => {
+    const savedToken = localStorage.getItem('wx_access_token');
+    if (savedToken) {
+      setAccessToken(savedToken);
+    }
+  }, []);
 
   // 获取当前access_token（通过后端API）
   const fetchAccessToken = async () => {
@@ -32,7 +40,9 @@ export default function TicketPanel({ ticketData, onSaveTicket }: TicketPanelPro
         throw new Error(data.error);
       }
       
+      // 设置token到状态并保存到localStorage
       setAccessToken(data.access_token);
+      localStorage.setItem('wx_access_token', data.access_token);
     } catch (error) {
       console.error('Failed to fetch access token:', error);
     } finally {
@@ -164,14 +174,27 @@ export default function TicketPanel({ ticketData, onSaveTicket }: TicketPanelPro
             <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
               <div className="flex items-center justify-between mb-2">
                 <div className="text-sm font-medium text-slate-500 dark:text-slate-400">Access Token</div>
-                <button 
-                  className={`px-3 py-1 text-xs rounded-full 
-                    ${tokenLoading ? 'bg-slate-200 text-slate-500 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
-                  onClick={fetchAccessToken}
-                  disabled={tokenLoading}
-                >
-                  {tokenLoading ? '获取中...' : '获取/刷新'}
-                </button>
+                <div className="flex space-x-2">
+                  <button 
+                    className={`px-3 py-1 text-xs rounded-full 
+                      ${tokenLoading ? 'bg-slate-200 text-slate-500 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
+                    onClick={fetchAccessToken}
+                    disabled={tokenLoading}
+                  >
+                    {tokenLoading ? '获取中...' : '获取/刷新'}
+                  </button>
+                  {accessToken && (
+                    <button 
+                      className="px-3 py-1 text-xs rounded-full bg-red-500 hover:bg-red-600 text-white"
+                      onClick={() => {
+                        localStorage.removeItem('wx_access_token');
+                        setAccessToken('');
+                      }}
+                    >
+                      清除
+                    </button>
+                  )}
+                </div>
               </div>
               {accessToken ? (
                 <div className="relative">

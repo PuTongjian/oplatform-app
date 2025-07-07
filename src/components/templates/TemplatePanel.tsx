@@ -4,6 +4,12 @@ import DraftList from './DraftList';
 import TemplateList from './TemplateList';
 import AddTemplateModal from './AddTemplateModal';
 
+interface AuthorizedApp {
+  authorizer_appid: string;
+  refresh_token: string;
+  auth_time: number;
+}
+
 interface TemplatePanelProps {
   activeTab: string;
 }
@@ -183,6 +189,42 @@ export default function TemplatePanel({ activeTab }: TemplatePanelProps) {
     }
   };
 
+  // 处理上传模板到小程序
+  const handleUploadTemplate = async (templateId: number, authorizedApps: AuthorizedApp[]) => {
+    if (authorizedApps.length === 0) return;
+    
+    const appIds = authorizedApps.map(app => app.authorizer_appid);
+    const operationKey = `upload-${templateId}`;
+    
+    setOperationLoading({ ...operationLoading, [operationKey]: true });
+    
+    try {
+      // 这里只是模拟API调用，实际项目中应该调用真实的API
+      console.log(`上传模板 ${templateId} 到小程序:`, appIds);
+      
+      // 模拟API调用延迟
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setOperationResult({
+        success: true,
+        message: `已成功上传模板到 ${appIds.length} 个小程序`,
+        visible: true,
+      });
+    } catch (error) {
+      setOperationResult({
+        success: false,
+        message: `上传失败: ${error instanceof Error ? error.message : String(error)}`,
+        visible: true,
+      });
+    } finally {
+      setOperationLoading({ ...operationLoading, [operationKey]: false });
+      // 3秒后隐藏结果提示
+      setTimeout(() => {
+        setOperationResult(prev => ({ ...prev, visible: false }));
+      }, 3000);
+    }
+  };
+
   if (templatesLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-64">
@@ -254,6 +296,7 @@ export default function TemplatePanel({ activeTab }: TemplatePanelProps) {
         templates={templates} 
         onDeleteTemplate={handleDeleteTemplate}
         operationLoading={operationLoading}
+        onUploadTemplate={handleUploadTemplate}
       />
     </div>
   );

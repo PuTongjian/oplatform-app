@@ -8,12 +8,13 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import TicketPanel from '@/components/TicketPanel';
 import MessagePanel from '@/components/MessagePanel';
 import TemplatePanel from '@/components/templates/TemplatePanel';
+import AuthorizationPanel from '@/components/AuthorizationPanel';
 
 export default function Home() {
   const [ticketData, setTicketData] = useState<TicketData | null>(null);
   const [messages, setMessages] = useState<MessageData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<'ticket' | 'messages' | 'templates'>('ticket');
+  const [activeTab, setActiveTab] = useState<'ticket' | 'messages' | 'templates' | 'authorization'>('ticket');
 
   // 获取数据
   useEffect(() => {
@@ -41,10 +42,10 @@ export default function Home() {
     };
 
     fetchData();
-    
+
     // 设置定时刷新，每30秒刷新一次
     const interval = setInterval(fetchData, 30000);
-    
+
     return () => clearInterval(interval);
   }, []);
 
@@ -58,13 +59,13 @@ export default function Home() {
       },
       body: JSON.stringify({ data }),
     });
-    
+
     const result = await response.json();
-    
+
     if (!response.ok) {
       throw new Error(result.error || '保存失败');
     }
-    
+
     // 更新页面显示的数据
     if (result.ticket) {
       setTicketData(result.ticket);
@@ -74,32 +75,37 @@ export default function Home() {
   return (
     <Layout>
       {/* 选项卡导航 */}
-      <TabNavigation 
+      <TabNavigation
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         messagesCount={messages.length}
       />
-      
+
       {loading ? (
         <LoadingSpinner message="正在获取数据..." />
       ) : (
         <>
           {/* 调用凭证内容 */}
           {activeTab === 'ticket' && (
-            <TicketPanel 
+            <TicketPanel
               ticketData={ticketData}
               onSaveTicket={saveTicket}
             />
           )}
-          
+
           {/* 消息内容 */}
           {activeTab === 'messages' && (
             <MessagePanel messages={messages} />
           )}
-          
+
           {/* 小程序模板库 */}
           {activeTab === 'templates' && (
             <TemplatePanel activeTab={activeTab} />
+          )}
+
+          {/* 小程序授权 */}
+          {activeTab === 'authorization' && (
+            <AuthorizationPanel activeTab={activeTab} />
           )}
         </>
       )}

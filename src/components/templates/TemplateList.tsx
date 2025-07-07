@@ -1,16 +1,47 @@
+import { useState } from 'react';
 import { TemplateItem } from '@/types/dataTypes';
 import AuditStatusBadge from './AuditStatusBadge';
+import AuthorizedAppModal from './AuthorizedAppModal';
+
+interface AuthorizedApp {
+  authorizer_appid: string;
+  refresh_token: string;
+  auth_time: number;
+}
 
 interface TemplateListProps {
   templates: TemplateItem[];
   onDeleteTemplate: (templateId: number) => void;
   operationLoading: {[key: string]: boolean};
+  onUploadTemplate?: (templateId: number, authorizedApps: AuthorizedApp[]) => void;
 }
 
-export default function TemplateList({ templates, onDeleteTemplate, operationLoading }: TemplateListProps) {
+export default function TemplateList({ 
+  templates, 
+  onDeleteTemplate, 
+  operationLoading,
+  onUploadTemplate
+}: TemplateListProps) {
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
+
   // 将时间戳转换为可读格式
   const formatTime = (timestamp: number) => {
     return new Date(timestamp * 1000).toLocaleString();
+  };
+
+  // 处理点击上传按钮
+  const handleUploadClick = (templateId: number) => {
+    setSelectedTemplateId(templateId);
+    setShowAuthModal(true);
+  };
+
+  // 处理提交选中的授权小程序
+  const handleAuthSubmit = (selectedApps: AuthorizedApp[]) => {
+    if (selectedTemplateId !== null && onUploadTemplate) {
+      onUploadTemplate(selectedTemplateId, selectedApps);
+    }
+    setShowAuthModal(false);
   };
 
   return (
@@ -55,7 +86,14 @@ export default function TemplateList({ templates, onDeleteTemplate, operationLoa
                       )}
                     </td>
                     <td className="px-4 py-3">{formatTime(template.create_time)}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 flex space-x-2">
+                      <button
+                        className="px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded"
+                        onClick={() => handleUploadClick(template.template_id)}
+                        disabled={operationLoading[`upload-${template.template_id}`]}
+                      >
+                        {operationLoading[`upload-${template.template_id}`] ? '上传中...' : '上传'}
+                      </button>
                       <button
                         className="px-2 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded"
                         onClick={() => onDeleteTemplate(template.template_id)}
@@ -75,6 +113,16 @@ export default function TemplateList({ templates, onDeleteTemplate, operationLoa
           </div>
         )}
       </div>
+
+      {/* 授权小程序选择模态框 */}
+      {selectedTemplateId && (
+        <AuthorizedAppModal 
+          isOpen={showAuthModal} 
+          onClose={() => setShowAuthModal(false)}
+          onSubmit={handleAuthSubmit}
+          templateId={selectedTemplateId}
+        />
+      )}
     </div>
   );
 } 

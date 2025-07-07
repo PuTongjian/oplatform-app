@@ -2,8 +2,8 @@ name: 构建并发布Docker镜像
 
 on:
   push:
-    branches: [ "main" ]
-    # 当标签以v开头时也触发workflow（如v1.0.0）
+    # branches: [ "main" ]
+    # 当标签以v开头时触发workflow（如v1.0.0）
     tags: [ 'v*' ]
   # 允许手动触发workflow
   workflow_dispatch:

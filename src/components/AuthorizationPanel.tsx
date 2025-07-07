@@ -73,7 +73,7 @@ export default function AuthorizationPanel({ activeTab }: AuthorizationPanelProp
 
     // 构建PC版授权链接
     // auth_type=2 表示仅展示小程序
-    const url = `https://mp.weixin.qq.com/cgi-bin/componentloginpage?component_appid=${appid}&pre_auth_code=${code}&redirect_uri=${encodeURIComponent(callbackUri)}&auth_type=2`;
+    const url = `https://mp.weixin.qq.com/cgi-bin/componentloginpage?component_appid=${appid}&pre_auth_code=${code}&redirect_uri=${callbackUri}&auth_type=2`;
     setAuthUrl(url);
   };
 

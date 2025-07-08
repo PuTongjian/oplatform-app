@@ -9,12 +9,13 @@ import TicketPanel from '@/components/TicketPanel';
 import MessagePanel from '@/components/MessagePanel';
 import TemplatePanel from '@/components/templates/TemplatePanel';
 import AuthorizationPanel from '@/components/AuthorizationPanel';
+import AuthorizedMerchantsPanel from '@/components/AuthorizedMerchantsPanel';
 
 export default function Home() {
   const [ticketData, setTicketData] = useState<TicketData | null>(null);
   const [messages, setMessages] = useState<MessageData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<'ticket' | 'messages' | 'templates' | 'authorization'>('ticket');
+  const [activeTab, setActiveTab] = useState<'ticket' | 'messages' | 'templates' | 'authorization' | 'merchants'>('ticket');
 
   // 获取数据
   useEffect(() => {
@@ -106,6 +107,11 @@ export default function Home() {
           {/* 小程序授权 */}
           {activeTab === 'authorization' && (
             <AuthorizationPanel activeTab={activeTab} />
+          )}
+
+          {/* 授权商家 */}
+          {activeTab === 'merchants' && (
+            <AuthorizedMerchantsPanel />
           )}
         </>
       )}

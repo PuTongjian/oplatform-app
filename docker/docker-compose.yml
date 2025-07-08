@@ -9,4 +9,11 @@ services:
       - "3000:3000"
     restart: unless-stopped
     environment:
-      - NODE_ENV=production 
+      - NODE_ENV=production
+      - DATA_DIR=/app/data
+    volumes:
+      - oplatform-data:/app/data
+
+volumes:
+  oplatform-data:
+    driver: local 

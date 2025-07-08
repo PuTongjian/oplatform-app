@@ -18,4 +18,4 @@ try {
   console.error('Failed to initialize access token:', error);
 }
 
-export {}; 
+export { }; 

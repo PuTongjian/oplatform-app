@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Layout from '@/components/Layout';
 import Link from 'next/link';
 
@@ -11,6 +11,43 @@ function AuthCallbackContent() {
   const authCode = searchParams.get('auth_code');
   const expiresIn = searchParams.get('expires_in');
   const [copySuccess, setCopySuccess] = useState(false);
+  const [apiResponse, setApiResponse] = useState<any>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // 调用API获取授权方的信息和刷新令牌
+  useEffect(() => {
+    const fetchAuthorizerToken = async () => {
+      if (!authCode) return;
+
+      setIsLoading(true);
+      try {
+        // 调用后端API获取刷新令牌
+        const response = await fetch('/api/authorization/token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ authorization_code: authCode }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || '获取授权信息失败');
+        }
+
+        setApiResponse(data);
+      } catch (error) {
+        console.error('获取授权信息错误:', error);
+        setApiError(error instanceof Error ? error.message : '未知错误');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAuthorizerToken();
+  }, [authCode]);
 
   // 复制授权码到剪贴板
   const copyAuthCode = async () => {
@@ -92,10 +129,36 @@ function AuthCallbackContent() {
                 )}
               </div>
 
+              {isLoading && (
+                <div className="flex justify-center items-center py-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                  <span className="ml-2 text-slate-600 dark:text-slate-300">获取授权信息中...</span>
+                </div>
+              )}
+
+              {apiError && (
+                <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/30 rounded">
+                  <p className="text-red-700 dark:text-red-300">获取授权信息失败: {apiError}</p>
+                </div>
+              )}
+
+              {apiResponse && (
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded">
+                  <h3 className="font-medium text-blue-800 dark:text-blue-300 mb-2">授权信息已保存</h3>
+                  <div className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
+                    <p>授权方AppID: {apiResponse.authorization_info?.authorizer_appid}</p>
+                    <p>已获取刷新令牌，您可以代表该账号调用接口</p>
+                    <p>
+                      授权权限: {apiResponse.authorization_info?.func_info?.length || 0} 项
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/30 rounded">
                 <h3 className="font-medium text-blue-800 dark:text-blue-300 mb-2">下一步操作</h3>
                 <p className="text-sm text-blue-700 dark:text-blue-400">
-                  使用此授权码调用 API 获取授权方的 access_token，然后可以代表该小程序调用 API。
+                  您可以在<Link href="/authorized-merchants" className="underline">授权商家</Link>页面查看所有已授权的商家信息。
                 </p>
               </div>
             </div>
